@@ -57,7 +57,11 @@
     const pantalla = document.querySelector('#pantallaVideo');
     const contenedorBtn = document.querySelector('#contenedorBoton');
     const btnAccion = document.querySelector('#btnAccion');
+    const textoBoton = document.querySelector('#textoBoton');
     const telonNegro = document.querySelector('#telonNegro');
+
+    // Guardamos la configuración de la animación para poder reiniciarla
+    const animEntrada = "property: position; to: 0 1.6 -2.5; dur: 8000; easing: easeOutCubic; delay: 500";
 
     // --- LÓGICA DE EVENTOS ---
     btnAccion.addEventListener('click', function() {
@@ -77,7 +81,21 @@
 
       setTimeout(() => {
         pantalla.setAttribute('visible', 'false');
+        
+        // 1. Cambiamos el texto del botón
+        textoBoton.setAttribute('value', 'VUELVE A VER\nNUESTRA\nHISTORIA');
+
+        // 2. Reseteamos la posición del contenedor
+        contenedorBtn.setAttribute('position', '0 1.6 -15');
+        
+        // 3. Quitamos y volvemos a poner la animación para que se ejecute de nuevo
+        contenedorBtn.removeAttribute('animation');
         contenedorBtn.setAttribute('visible', 'true');
+        
+        setTimeout(() => {
+          contenedorBtn.setAttribute('animation', animEntrada);
+        }, 50);
+        
       }, 4000);
     });
   </script>
