@@ -24,16 +24,34 @@
       animation__aclarar="property: material.opacity; to: 0; dur: 3000; startEvents: cineEnd; easing: easeInOutQuad">
     </a-sphere>
 
-    <a-video
-      id="pantallaVideo"
-      src="#videoUni"
-      width="5"
-      height="3"
-      position="0 1.6 -30"
-      visible="false"
+    <a-entity id="grupoVideo" position="0 1.6 -30" visible="false"
       animation__entrar="property: position; to: 0 1.6 -4; dur: 8000; easing: easeOutCubic; startEvents: videoEntra"
       animation__salir="property: position; to: 0 1.6 -30; dur: 4000; easing: easeInQuad; startEvents: videoSale">
-    </a-video>
+      
+      <a-video id="pantallaVideo" src="#videoUni" width="5" height="3"></a-video>
+
+      <a-entity id="controles" position="0 -1.8 0.1">
+        <a-circle id="btnAtras" class="clickable" color="#FFFFFF" radius="0.18" position="-1.2 0 0">
+          <a-text value="<< 10s" align="center" color="#FF0000" width="2"></a-text>
+        </a-circle>
+
+        <a-circle id="btnPausa" class="clickable" color="#FF0000" radius="0.22" position="-0.6 0 0">
+          <a-text id="txtPausa" value="PAUSA" align="center" color="#FFFFFF" width="2.5"></a-text>
+        </a-circle>
+
+        <a-circle id="btnReiniciar" class="clickable" color="#FFFFFF" radius="0.22" position="0 0 0">
+          <a-text value="RESET" align="center" color="#FF0000" width="2.5"></a-text>
+        </a-circle>
+
+        <a-circle id="btnAdelante" class="clickable" color="#FFFFFF" radius="0.18" position="0.6 0 0">
+          <a-text value="10s >>" align="center" color="#FF0000" width="2"></a-text>
+        </a-circle>
+
+        <a-circle id="btnDetener" class="clickable" color="#FF0000" radius="0.22" position="1.2 0 0">
+          <a-text value="SALIR" align="center" color="#FFFFFF" width="2.5"></a-text>
+        </a-circle>
+      </a-entity>
+    </a-entity>
 
     <a-entity
       id="contenedorBoton"
@@ -54,13 +72,33 @@
 
   <script>
     const video = document.querySelector('#videoUni');
-    const pantalla = document.querySelector('#pantallaVideo');
+    const grupoVideo = document.querySelector('#grupoVideo');
     const contenedorBtn = document.querySelector('#contenedorBoton');
     const btnAccion = document.querySelector('#btnAccion');
     const textoBoton = document.querySelector('#textoBoton');
     const telonNegro = document.querySelector('#telonNegro');
+    const txtPausa = document.querySelector('#txtPausa');
 
     const animEntrada = "property: position; to: 0 1.6 -2.5; dur: 8000; easing: easeOutCubic; delay: 500";
+
+    // Función para cerrar el video (Salir)
+    function finalizarCine() {
+      video.pause();
+      telonNegro.emit('cineEnd');
+      grupoVideo.emit('videoSale');
+
+      setTimeout(() => {
+        grupoVideo.setAttribute('visible', 'false');
+        textoBoton.setAttribute('value', 'VUELVE A VER\nNUESTRA\nHISTORIA');
+        contenedorBtn.setAttribute('position', '0 1.6 -15');
+        contenedorBtn.removeAttribute('animation');
+        contenedorBtn.setAttribute('visible', 'true');
+        
+        setTimeout(() => {
+          contenedorBtn.setAttribute('animation', animEntrada);
+        }, 50);
+      }, 4000);
+    }
 
     // --- LÓGICA DE EVENTOS ---
     btnAccion.addEventListener('click', function() {
@@ -70,32 +108,44 @@
       video.currentTime = 0;
       video.load(); 
       
-      pantalla.setAttribute('visible', 'true');
-      pantalla.emit('videoEntra');
+      grupoVideo.setAttribute('visible', 'true');
+      grupoVideo.emit('videoEntra');
 
       setTimeout(() => { video.play(); }, 500); 
     });
 
-    video.addEventListener('ended', function() {
-      telonNegro.emit('cineEnd');
-      pantalla.emit('videoSale');
-
-      setTimeout(() => {
-        pantalla.setAttribute('visible', 'false');
-        
-        // CAMBIO DE TEXTO
-        textoBoton.setAttribute('value', 'VUELVE A VER\nNUESTRA\nHISTORIA');
-        
-        // REINICIO DE BOTÓN
-        contenedorBtn.setAttribute('position', '0 1.6 -15');
-        contenedorBtn.removeAttribute('animation');
-        contenedorBtn.setAttribute('visible', 'true');
-        
-        setTimeout(() => {
-          contenedorBtn.setAttribute('animation', animEntrada);
-        }, 50);
-      }, 4000);
+    // Control: Pausa / Play
+    document.querySelector('#btnPausa').addEventListener('click', function() {
+      if (video.paused) {
+        video.play();
+        txtPausa.setAttribute('value', 'PAUSA');
+      } else {
+        video.pause();
+        txtPausa.setAttribute('value', 'PLAY');
+      }
     });
+
+    // Control: Reiniciar
+    document.querySelector('#btnReiniciar').addEventListener('click', function() {
+      video.currentTime = 0;
+      video.play();
+      txtPausa.setAttribute('value', 'PAUSA');
+    });
+
+    // Control: Retroceder 10s
+    document.querySelector('#btnAtras').addEventListener('click', function() {
+      video.currentTime = Math.max(0, video.currentTime - 10);
+    });
+
+    // Control: Adelantar 10s
+    document.querySelector('#btnAdelante').addEventListener('click', function() {
+      video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    });
+
+    // Control: Salir
+    document.querySelector('#btnDetener').addEventListener('click', finalizarCine);
+
+    video.addEventListener('ended', finalizarCine);
   </script>
 </body>
 </html>
