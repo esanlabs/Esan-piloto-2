@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>ESAN - Trayectoria histórica</title>
+  <title>ESAN RV- Trayectoria Histórica</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 </head>
 
@@ -62,6 +62,7 @@
 
     <a-entity id="rig" position="0 0 0">
       <a-camera look-controls wasd-controls>
+        <a-cursor fuse="false" raycaster="objects: .clickable" material="color: yellow; shader: flat"></a-cursor>
       </a-camera>
       <a-entity laser-controls="hand: right" raycaster="objects: .clickable" line="color: #FFD700; opacity: 0.9"></a-entity>
       <a-entity laser-controls="hand: left" raycaster="objects: .clickable" line="color: #FFD700; opacity: 0.9"></a-entity>
@@ -83,6 +84,7 @@
     const ANCHO_BARRA = 5;
 
     function formatearTiempo(segundos) {
+      if(isNaN(segundos)) return "0:00";
       const min = Math.floor(segundos / 60);
       const seg = Math.floor(segundos % 60);
       return `${min}:${seg.toString().padStart(2, '0')}`;
@@ -92,7 +94,7 @@
       DURACION_TOTAL = video.duration;
     });
 
-    // Generar estrellas
+    // Generar estrellas (se mantiene igual)
     for (let i = 0; i < 2000; i++) {
         let estrella = document.createElement('a-sphere');
         let theta = Math.random() * Math.PI * 2;
@@ -112,34 +114,37 @@
         estrellasContainer.appendChild(estrella);
     }
 
-    // --- FUNCIÓN DE ACTUALIZACIÓN ÚNICA ---
     function actualizarInterfaz() {
-      if (!DURACION_TOTAL || video.paused) return;
+      if (!video.duration || video.paused) return;
 
       const tiempoActual = video.currentTime;
-      const progreso = tiempoActual / DURACION_TOTAL;
+      const progreso = tiempoActual / video.duration;
 
-      // Cálculo de ancho y posición para que se llene de izquierda a derecha
       barraProgreso.setAttribute('width', Math.max(0.01, progreso * ANCHO_BARRA));
       barraProgreso.setAttribute('position', `${-2.5 + (progreso * ANCHO_BARRA) / 2} -1.6 0.02`);
+      textoDuracion.setAttribute('value', `${formatearTiempo(tiempoActual)} / ${formatearTiempo(video.duration)}`);
 
-      textoDuracion.setAttribute('value', `${formatearTiempo(tiempoActual)} / ${formatearTiempo(DURACION_TOTAL)}`);
-
-      // Mantener el loop de alta precisión
       requestAnimationFrame(actualizarInterfaz);
     }
 
-    // Respaldar la actualización con el evento nativo del video (Crucial para VR)
     video.addEventListener('timeupdate', actualizarInterfaz);
 
+    // --- AJUSTE PRINCIPAL AQUÍ ---
     document.querySelector('#btnAccion').addEventListener('click', () => {
-      contenedorBtn.setAttribute('visible', 'false');
-      telon.emit('cineStart'); 
-      grupoVideo.setAttribute('visible', 'true');
+      // Forzamos el encendido del audio y el play
+      video.muted = false; 
       
       video.play().then(() => {
+          contenedorBtn.setAttribute('visible', 'false');
+          telon.emit('cineStart'); 
+          grupoVideo.setAttribute('visible', 'true');
           estrellasContainer.setAttribute('visible', 'true');
           actualizarInterfaz(); 
+      }).catch((error) => {
+          console.error("Error al reproducir el video:", error);
+          // Si falla, intentamos reproducir aunque sea sin sonido
+          video.muted = true;
+          video.play();
       });
     });
 
@@ -176,28 +181,7 @@
     });
 
     document.querySelector('#btnNormal').addEventListener('click', () => video.playbackRate = 1);
-    document.querySelector('#btnRapido').addEventListener('click', () => video.playbackRate = 4);
+    document.querySelector('#btnRapido').addEventListener('click', () => video.playbackRate = 2);
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
